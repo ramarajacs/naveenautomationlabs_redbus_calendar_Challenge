@@ -1,0 +1,76 @@
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using SeleniumExtras.WaitHelpers;
+namespace InterviewPrograms
+{
+    class CodeChallenge
+    {
+
+
+        public static void Main(string[] args)
+        {
+            string driverPath = @"C:\Users\LENOVO\source\repos\InterviewPrograms\InterviewPrograms\chromedriver.exe";
+            ChromeOptions ss = new ChromeOptions();
+            IWebDriver driver = new ChromeDriver(driverPath, ss);
+            string url = "https://www.redbus.in/";
+            ss.AddArguments("--disable-notifications");
+            driver.Manage().Window.Maximize();
+            driver.Navigate().GoToUrl(url);
+            Thread.Sleep(10000);
+
+            driver.FindElement(By.CssSelector("div#onwardCal")).Click();
+            string expected = "Mar 2025";
+            string previousMonth = "";
+            WebElement CurrentMonth = (WebElement)driver.FindElement(By.CssSelector("div[class*='DayNavigator__CalendarHeader'] > div:nth-child(2)"));
+            do
+            {
+		// Removing if condition means we can get specific month week end dates
+                //if (CurrentMonth.Text.Contains(expected)) { 
+
+                IList<IWebElement> eachDate = driver.FindElements(By.CssSelector("div[class*='DayTilesWrapper__RowWrap'] > span > div"));
+                var list = new List<int>();
+
+                for (int j = 6; j <= 7; j++)
+                {
+                    var weekEnddate = driver.FindElements(By.CssSelector($"div[class*='DayTilesWrapper__RowWrap'] > span > div:nth-child({j}) >span"));
+                    foreach (var element in weekEnddate)
+                    {
+                        if (isClickable(element, driver) && element.Enabled && element.GetCssValue("color").Equals("rgba(216, 78, 85, 1)"))
+                        {
+                            list.Add(Convert.ToInt32(element.Text));
+                        }
+                        else if (isClickable(element, driver) && element.Enabled && element.GetCssValue("background").Contains("rgb(239, 67, 72)"))
+                        {
+                            list.Add(Convert.ToInt32(element.Text));
+                        }
+                    }
+                }
+                list.Sort();
+                Console.WriteLine("WeekEnd dates: " + string.Join(",", list));
+                list.Clear();
+                //}
+                previousMonth = CurrentMonth.Text;
+                driver.FindElement(By.CssSelector("div[class*='DayNavigator__CalendarHeader'] > div:nth-child(3) > svg")).Click();
+
+
+            } while (!previousMonth.Contains(expected));
+            driver.Quit();
+        }
+        public static bool isClickable(IWebElement webe, IWebDriver driver)
+        {
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
+                wait.Until(ExpectedConditions.ElementToBeClickable(webe));
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
